@@ -6,11 +6,11 @@ from oauth2client.service_account import ServiceAccountCredentials
 from prompts import course_name, target_audience, specific_topics,  course_level, course_focus, next_learning_unit
 import toml
 
-config = toml.load("config.toml")
+# config = toml.load("config.toml")
 
 # Initial Configuration
 # api_key = config["openai"]["api_key"]
-api_key = st.secrets["openai"]["api_key"] 
+api_key = st.secrets.api_key
 
 openai.api_key = api_key
 #API Google Sheets
