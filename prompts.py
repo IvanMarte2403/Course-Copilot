@@ -1,13 +1,32 @@
 import streamlit as st
+import subprocess
 
-course_name = "Sistemas de recomendación con Machine Learning"
+# Título de la aplicación
+st.title("Entrada de datos para el curso")
 
-target_audience = "Personas con conocimiento en programación con Python que buscan profundizar su conocimiento en machine learning y crear un sistema de recomendación para su empresa, tienen un trabajo en una empresa top de México, cuentan con 4 horas a la semana para estudiar de lunes a viernes"
+# Crear inputs de texto para cada variable y guardar los valores ingresados por el usuario
+course_name = st.text_input("Nombre del curso", "Sistemas de recomendación con Machine Learning")
 
+target_audience = st.text_area("Audiencia objetivo", "Personas con conocimiento en programación con Python que buscan profundizar su conocimiento en machine learning y crear un sistema de recomendación para su empresa, tienen un trabajo en una empresa top de México, cuentan con 4 horas a la semana para estudiar de lunes a viernes")
 
-specific_topics = "Ejemplos y casos de uso de sistemas de recomendación"
-course_level = "avanzado"
+specific_topics = st.text_input("Temas específicos", "Ejemplos y casos de uso de sistemas de recomendación")
 
-course_focus = "técnico"
+course_level = st.selectbox(
+    "Nivel del curso",
+    ("Básico", "Intermedio", "Avanzado", "Experto")
+)
 
-next_learning_unit = "IA Generativa"
+course_focus = st.text_input("Enfoque del curso", "técnico")
+
+next_learning_unit = st.text_input("Siguiente unidad de aprendizaje", "IA Generativa")
+
+# Opcional: Añadir un botón para confirmar la entrada y mostrar los valores ingresados
+if st.button('Guardar'):
+    st.write("Nombre del curso:", course_name)
+    st.write("Audiencia objetivo:", target_audience)
+    st.write("Temas específicos:", specific_topics)
+    st.write("Nivel del curso:", course_level)
+    st.write("Enfoque del curso:", course_focus)
+    st.write("Siguiente unidad de aprendizaje:", next_learning_unit)
+  
+    subprocess.run(["python", "course_copilot.py"])
