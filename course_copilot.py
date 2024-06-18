@@ -10,9 +10,9 @@ import toml
 
 # Initial Configuration
 # api_key = config["openai"]["api_key"]
-api_key = st.secrets.api_key
+api_key = st.secrets["api-key"]
 
-openai.api_key = api_key
+openai.api_key = api_key    
 #API Google Sheets
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-78432e6747e5.json', scope)
