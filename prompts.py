@@ -1,6 +1,11 @@
 import streamlit as st
 import subprocess
 
+
+
+
+
+
 # Título de la aplicación
 st.title("Entrada de datos para el curso")
 
@@ -20,7 +25,6 @@ course_focus = st.text_input("Enfoque del curso", "técnico")
 
 next_learning_unit = st.text_input("Siguiente unidad de aprendizaje", "IA Generativa")
 
-# Opcional: Añadir un botón para confirmar la entrada y mostrar los valores ingresados
 if st.button('Guardar'):
     st.write("Nombre del curso:", course_name)
     st.write("Audiencia objetivo:", target_audience)
@@ -28,5 +32,7 @@ if st.button('Guardar'):
     st.write("Nivel del curso:", course_level)
     st.write("Enfoque del curso:", course_focus)
     st.write("Siguiente unidad de aprendizaje:", next_learning_unit)
-  
+    st.write("The copilot start .... 🤖")
     subprocess.run(["python", "course_copilot.py"])
+    st.write("The next link have your new lesson 🚀")
+    st.write("https://docs.google.com/spreadsheets/d/1EmJObSLuOedjwUAFJHG3_LWHyVrILSjQB_sqtSd86lM/edit?usp=sharing")

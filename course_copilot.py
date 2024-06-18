@@ -4,10 +4,14 @@ import re
 from config import api_key, api_google
 from oauth2client.service_account import ServiceAccountCredentials
 from prompts import course_name, target_audience, specific_topics, course_level, course_focus, next_learning_unit
+import toml
+
+config = toml.load("config.toml")
 
 # Initial Configuration
+api_key = config["openai"]["api_key"]
+
 openai.api_key = api_key
-#API Google Sheets
 #API Google Sheets
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-78432e6747e5.json', scope)
@@ -18,6 +22,7 @@ sheet2 = spreadsheet.get_worksheet(1)
 sheet3 = spreadsheet.get_worksheet(2) 
 sheet4 = spreadsheet.get_worksheet(3) 
 sheet5 = spreadsheet.get_worksheet(4) 
+
 
  
 
@@ -162,6 +167,8 @@ def generate_course_syllabus(course_name, entry_profile, course_focus, main_obje
 
 
     # ==========================[Aplicación]=================================
+
+
 
 print('Generating Income Profile .... 🤖')
 
@@ -331,4 +338,6 @@ for semana in semanas:
 
 # Ejecutar todas las actualizaciones en un batch
 sheet5.batch_update(batch_updates)
+
+
 
