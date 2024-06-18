@@ -1,0 +1,6 @@
+openai
+gspread
+re
+oauth2client.service_account
+streamlit
+subprocess
