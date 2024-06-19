@@ -15,10 +15,15 @@ scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/au
 
 #streamlit secret credentials
 
+
+
 openai.api_key = st.secrets["gpt_key"]['api_key']
 
 json_creds_str = st.secrets["google_creds"]["json"]
 json_creds = json.loads(json_creds_str)
+print("JSON string from secrets:", json_creds_str)
+json_creds = json.loads(json_creds_str)
+
 creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
 
 client = gspread.authorize(creds)
