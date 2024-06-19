@@ -7,19 +7,20 @@ import json
 import streamlit as st
 import subprocess
 
-scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
 # Initial Configuration
-openai.api_key = api_key      
-creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-78432e6747e5.json', scope)
+# openai.api_key = api_key      
+# # #API Google Sheets
+# scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+# creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-78432e6747e5.json', scope)
 
 #streamlit secret credentials
 
-# open.api_key = st.secrets.gpt_key.apy_key
-# json_creds = json.loads(st.secrets.google_creds.json)
-# creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
+open.api_key = st.secrets.gpt_key.apy_key
 
 
+json_creds = json.loads(st.secrets.google_creds.json)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
 
 client = gspread.authorize(creds)
 spreadsheet = client.open('Pipeline para creación de cursos')
