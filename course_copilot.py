@@ -3,23 +3,23 @@ import gspread
 import re
 from config import api_key
 from oauth2client.service_account import ServiceAccountCredentials
-from prompts import course_name, target_audience, specific_topics, course_level, course_focus, next_learning_unit
 import json
 import streamlit as st
+import subprocess
+
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
 # Initial Configuration
-# openai.api_key = api_key      
-# #API Google Sheets
-scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-# creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-78432e6747e5.json', scope)
+openai.api_key = api_key      
+creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-78432e6747e5.json', scope)
 
 #streamlit secret credentials
 
-open.api_key = st.secrets.gpt_key.apy_key
+# open.api_key = st.secrets.gpt_key.apy_key
+# json_creds = json.loads(st.secrets.google_creds.json)
+# creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
 
 
-json_creds = json.loads(st.secrets.google_creds.json)
-creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
 
 client = gspread.authorize(creds)
 spreadsheet = client.open('Pipeline para creación de cursos')
@@ -31,103 +31,185 @@ sheet4 = spreadsheet.get_worksheet(3)
 sheet5 = spreadsheet.get_worksheet(4) 
 
 
- 
-
-
-def generate_chatgpt(prompt, model="gpt-4o",temperature =0.7):
-    response = openai.chat.completions.create(
-        model= model,
-        messages=[{"role": "system", "content": "Start"}, {"role": "user", "content": prompt}],
-        temperature = temperature
-    )
-    return response.choices[0].message.content
+course_name = " "
+target_audience = " "
+specific_topics = " "
+course_level = " "
+course_focus = " "
+next_learning_unit = " "
 
 
 
+def main():
+
+    def generate_chatgpt(prompt, model="gpt-4o",temperature =0.7):
+        response = openai.chat.completions.create(
+          model= model,
+          messages=[{"role": "system", "content": "Start"}, {"role": "user", "content": prompt}],
+          temperature = temperature
+      )
+        return response.choices[0].message.content
 
 
+    def generate_course_entry_profile(course_name, target_audience, specific_topics, course_level,course_focus):
+   
+        # Definir el prompt para la generación de texto
+        prompt = (
+            f"Como experto diseñador de programas académicos especializado en tecnología, "
+            f"tu tarea es mejorar el perfil de ingreso para el curso de {course_name} "
+            f"tomando como base a estudiantes {target_audience} definido para este curso. "
+            f"Este curso tiene un nivel {course_level}. El perfil de ingreso ideal para este curso es..., no se deben usar caracteres especiales o formatos específicos para el texto."
+        )
 
-def generate_course_entry_profile(course_name, target_audience, specific_topics, course_level,course_focus):
-    """
-    Generates an entry profile for a course based on provided parameters.
+        return generate_chatgpt(prompt)
+
+    def search_and_analyze_courses(course_name, course_level,profile):
+        print(f"Realizando investigación de cursos similares a {course_name} de nivel {course_level}...")
+
+        prompt = f"Como experto diseñador de programas ac adémicos especializado en tecnología, tu tarea es desarrollar un nuevo curso titulado {course_name} dirigido a {profile}. Para garantizar que el curso sea competitivo y cumpla con las expectativas del público objetivo, realiza una investigación comparativa de tres cursos relacionados disponibles en plataformas de educación en línea, tomando en cuenta el {course_level} Formato:   'Nombre: [nombre], Año: [año], Objetivos: [objetivo1, objetivo2, objetivo3]', Descripcion Breve: [descripcion-breve], Temario Detallado [temario-detallado]  , Retorna [número] Nombre: [nombre], Año: [año], Objetivos: [objetivo1, objetivo2, objetivo3].  Descripcion Breve: [descripcion-breve], Temario Detallado [temario-detallado] , no se deben usar caracteres especiales o formatos específicos para el texto. solo es permitido []"
+        response = generate_chatgpt(prompt)
+        courses =response
     
-    Args:
-    course_name (str): The name of the course.
-    target_audience (str): The intended audience for the course.
-    specific_topics (str): Specific topics covered in the course.
-    course_level (str): The level of the course (e.g., beginner, intermediate).
-    course_focus (str): The main focus of the course.
+        sections = re.split(r'\n\d',courses)
+        if sections[0]  == ' ':
+                sections = sections[1:]
 
-    Returns:
-    str: The recommended entry profile for the course.
-    """
-    # Definir el prompt para la generación de texto
-    prompt = (
-        f"Como experto diseñador de programas académicos especializado en tecnología, "
-        f"tu tarea es mejorar el perfil de ingreso para el curso de {course_name} "
-        f"tomando como base a estudiantes {target_audience} definido para este curso. "
-        f"Este curso tiene un nivel {course_level}. El perfil de ingreso ideal para este curso es..., no se deben usar caracteres especiales o formatos específicos para el texto."
-    )
-
-    return generate_chatgpt(prompt)
+        return sections
 
 
+    def generate_course_objectives(course_name, course_level, course_focus, profile, specific_topics,course):
+        prompt = (
+            f"Basándote en las áreas de oportunidad identificadas y en los {specific_topics} si es que existen, y los cursos {course} "
+            f"para el curso de {course_name} con un nivel {course_level} y un enfoque {course_focus}, "
+            f"orientado a {profile} procede a definir un objetivo claro y conciso del curso. "
+            f"Estos objetivos deben estructurarse de manera que reflejen las metas educativas del programa y cómo se alinean con las necesidades del {profile}. "
+            f"El nombre del objetivo tiene que captar la esencia del curso, y la descripción del objetivo describe en habilidades. No se deben usar caracteres especiales o formatos específicos para el texto. Solo está permitido []."
+            f"\n\nNombre[nombre del Objetivo], Descripción[descripcion del objetivo]\n"
+        )
+        return generate_chatgpt(prompt)
 
-def search_and_analyze_courses(course_name, course_level,profile):
-    print(f"Realizando investigación de cursos similares a {course_name} de nivel {course_level}...")
 
-    prompt = f"Como experto diseñador de programas ac adémicos especializado en tecnología, tu tarea es desarrollar un nuevo curso titulado {course_name} dirigido a {profile}. Para garantizar que el curso sea competitivo y cumpla con las expectativas del público objetivo, realiza una investigación comparativa de tres cursos relacionados disponibles en plataformas de educación en línea, tomando en cuenta el {course_level} Formato:   'Nombre: [nombre], Año: [año], Objetivos: [objetivo1, objetivo2, objetivo3]', Descripcion Breve: [descripcion-breve], Temario Detallado [temario-detallado]  , Retorna [número] Nombre: [nombre], Año: [año], Objetivos: [objetivo1, objetivo2, objetivo3].  Descripcion Breve: [descripcion-breve], Temario Detallado [temario-detallado] , no se deben usar caracteres especiales o formatos específicos para el texto. solo es permitido []"
-    response = generate_chatgpt(prompt)
-    courses =response
+    def generate_course_secondary_objectives(course_name, course_level, course_focus, profile, specific_topics, principal_objective,course):
+        prompt = (
+            f"Basándote en las áreas de oportunidad identificadas y en los {specific_topics} si es que existen, y en los cursos {course}"
+            f"para el curso de {course_name} con un nivel {course_level} y un enfoque {course_focus}, y en el objetivo principal {principal_objective} "
+            f"orientado a {profile} procede a definir 5 objetivos claros y concisos del curso. "
+            f"Estos objetivos deben estructurarse de manera que reflejen las metas educativas del programa y cómo se alinean con las necesidades del {profile}. "
+            f"El nombre del objetivo tiene que captar la esencia del curso, y la descripción del objetivo describe en habilidades. No se deben usar caracteres especiales o formatos específicos para el texto. Solo está permitido []. Es obligatorio que el numero retorne con el formato Numero[numero del objetivo]"
+            f"\n\nNumero[numero del objetivo],Nombre[nombre del Objetivo], Descripción[descripcion del objetivo]\n"
+        )
+        return generate_chatgpt(prompt)
+
+
+    #Graduate Profile
+    def generate_graduate_profile(course_name, target_audience, specific_topics, next_learning_unit, principal_objetive, secondary_objetives):
+
+        prompt = (
+            f"Basándote en la descripción del curso que es {course_name}y los objetivos  que son {principal_objetive} y {secondary_objetives} tanto generales como específicos definidos previamente y en los {specific_topics}, "
+            f"procede a crear un perfil de egreso para los estudiantes que completen el curso de {course_name}, "
+            f"enfocado especialmente en aquellos {target_audience}. "
+            f"Considera que idealmente el siguiente paso en su camino de aprendizaje es tener las bases para continuar su aprendizaje en {next_learning_unit}, "
+            f"sin embargo no lo menciones explícitamente. "
+            f"- Redacta un párrafo que sea claro, conciso e impactante, reflejando el valor que los estudiantes aportarán a sus empresas o su crecimiento profesional tras completar el curso. "
+            f"Este debe resumir las capacidades, la mentalidad y la preparación con la que contarán los egresados, destacando su preparación para enfrentar los desafíos tecnológicos actuales."
+            )
+        return generate_chatgpt(prompt)
     
-    sections = re.split(r'\n\d',courses)
-    if sections[0]  == ' ':
-        sections = sections[1:]
 
-    return sections
+    print('Generating Income Profile .... 🤖')
 
+    profile = generate_course_entry_profile(course_name, target_audience, specific_topics, course_level, course_focus)
+    print ('Writting in Google Sheets .... ✍️ ')
 
-def generate_course_objectives(course_name, course_level, course_focus, profile, specific_topics,course):
-    prompt = (
-        f"Basándote en las áreas de oportunidad identificadas y en los {specific_topics} si es que existen, y los cursos {course} "
-        f"para el curso de {course_name} con un nivel {course_level} y un enfoque {course_focus}, "
-        f"orientado a {profile} procede a definir un objetivo claro y conciso del curso. "
-        f"Estos objetivos deben estructurarse de manera que reflejen las metas educativas del programa y cómo se alinean con las necesidades del {profile}. "
-        f"El nombre del objetivo tiene que captar la esencia del curso, y la descripción del objetivo describe en habilidades. No se deben usar caracteres especiales o formatos específicos para el texto. Solo está permitido []."
-        f"\n\nNombre[nombre del Objetivo], Descripción[descripcion del objetivo]\n"
-    )
-    return generate_chatgpt(prompt)
+    sheet1.update_cell(2, 1, profile)
+
+    print ('Done! ✅')
 
 
-def generate_course_secondary_objectives(course_name, course_level, course_focus, profile, specific_topics, principal_objective,course):
-    prompt = (
-        f"Basándote en las áreas de oportunidad identificadas y en los {specific_topics} si es que existen, y en los cursos {course}"
-        f"para el curso de {course_name} con un nivel {course_level} y un enfoque {course_focus}, y en el objetivo principal {principal_objective} "
-        f"orientado a {profile} procede a definir 5 objetivos claros y concisos del curso. "
-        f"Estos objetivos deben estructurarse de manera que reflejen las metas educativas del programa y cómo se alinean con las necesidades del {profile}. "
-        f"El nombre del objetivo tiene que captar la esencia del curso, y la descripción del objetivo describe en habilidades. No se deben usar caracteres especiales o formatos específicos para el texto. Solo está permitido []. Es obligatorio que el numero retorne con el formato Numero[numero del objetivo]"
-        f"\n\nNumero[numero del objetivo],Nombre[nombre del Objetivo], Descripción[descripcion del objetivo]\n"
-    )
-    return generate_chatgpt(prompt)
+    print('Generating Courses  .... 🤖')
+
+    course = search_and_analyze_courses(course_name, course_level,profile)
 
 
-#Graduate Profile
-def generate_graduate_profile(course_name, target_audience, specific_topics, next_learning_unit, principal_objetive, secondary_objetives):
+    print ('Writting in Google Sheets .... ✍️ ')
 
-    prompt = (
-        f"Basándote en la descripción del curso que es {course_name}y los objetivos  que son {principal_objetive} y {secondary_objetives} tanto generales como específicos definidos previamente y en los {specific_topics}, "
-        f"procede a crear un perfil de egreso para los estudiantes que completen el curso de {course_name}, "
-        f"enfocado especialmente en aquellos {target_audience}. "
-        f"Considera que idealmente el siguiente paso en su camino de aprendizaje es tener las bases para continuar su aprendizaje en {next_learning_unit}, "
-        f"sin embargo no lo menciones explícitamente. "
-        f"- Redacta un párrafo que sea claro, conciso e impactante, reflejando el valor que los estudiantes aportarán a sus empresas o su crecimiento profesional tras completar el curso. "
-        f"Este debe resumir las capacidades, la mentalidad y la preparación con la que contarán los egresados, destacando su preparación para enfrentar los desafíos tecnológicos actuales."
-    )
-    return generate_chatgpt(prompt)
+    for i, section in enumerate(course, start=0):
+        sheet2.update_cell(i+2, 1, section)
 
 
-# Key Skills 
-def generate_key_skills(course_name, target_audience, graduate_profile):
+    print ('Done! ✅')
+
+
+
+    print('Generating  Principal Objetive .... 🤖')
+
+    principal_objetive = generate_course_objectives(course_name, course_level, course_focus, profile, specific_topics, course)
+
+    print ('Writting in Google Sheets .... ✍️ ')
+
+    # Search Objetivo in the text
+    match = re.search(r'Nombre\[(.*?)\]', principal_objetive)
+    if match:
+        name = match.group(1)
+        sheet3.update_cell(2, 1, name)
+
+    match = re.search(r'Descripción\[(.*?)\]', principal_objetive)
+    if match:
+        description = match.group(1)
+        sheet3.update_cell(3, 1, description)
+
+        print ('Done! ✅')
+
+
+    # ======================Generating Objetives=====================
+
+    print('Generating  Objectives .... 🤖')
+
+    secondary_objetives = generate_course_secondary_objectives(course_name, course_level, course_focus, profile, specific_topics, principal_objetive,course)
+
+    print("Objetivos secundarios generados:")
+    print('Escribiendo en Google Sheets .... ✍️')
+
+    # Dividir el texto en líneas
+    lines = secondary_objetives.strip().split('\n')
+
+    # Verificar que las líneas se están dividiendo correctamente
+    print(f"Total de líneas a procesar: {len(lines)}")
+
+    # Iterar sobre las líneas
+    for i, line in enumerate(lines, start=3):
+        print(f"Procesando línea {i}")  # Impresión de depuración
+        number_match = re.search(r'Numero\[(.*?)\]', line)
+        name_match = re.search(r'Nombre\[(.*?)\]', line)
+        description_match = re.search(r'Descripci[oó]n\[(.*?)\]', line)
+
+        if number_match and name_match and description_match:
+            print(f"Actualizando Google Sheets para la línea {i}")  # Más impresiones de depuración
+            sheet3.update_cell(i, 3, name_match.group(1))
+            sheet3.update_cell(i, 4, description_match.group(1))
+        else:
+            print(f"No se encontraron coincidencias en la línea {i}")  # Ayuda a identificar líneas problemáticas
+
+    print ('Done! ✅')
+
+    # =========================Printing Graduate Profile=========================
+
+    print('Generating Graduate Profile .... 🤖')
+    graduate_profile = generate_graduate_profile(course_name, target_audience, specific_topics, next_learning_unit, principal_objetive, secondary_objetives)
+
+
+    print ('Writting in Google Sheets .... ✍️ ')
+
+
+    sheet4.update_cell(1, 2, graduate_profile)
+
+
+    print('Done! ✅')
+
+
+
+    # Key Skills 
+    def generate_key_skills(course_name, target_audience, graduate_profile):
         prompt = (
             f"En todas las habilidades basate tambien en {graduate_profile}. Para cada una de las 5 habilidades principales del curso {course_name}, enfocado en {target_audience}, "
             f"genera un detalle que incluya:\n"
@@ -140,211 +222,162 @@ def generate_key_skills(course_name, target_audience, graduate_profile):
         return generate_chatgpt(prompt)
 
 
-def generate_course_syllabus(course_name, entry_profile, course_focus, main_objective, course):
+    def generate_course_syllabus(course_name, entry_profile, course_focus, main_objective, course):
    
-    # Determining the number of classes and their distribution based on course focus
-    if course_focus == "teórico":
-        total_classes = 24
-        weekly_distribution = "4 clases por semana de 1 hora cada clase, con 3 conceptos clave por clase."
-    elif course_focus == "técnico":
-        total_classes = 12
-        weekly_distribution = "2 clases por semana de 2 horas cada clase, 1 hora teoría y 1 hora de contenido técnico con ejercicios prácticos."
+        # Determining the number of classes and their distribution based on course focus
+        if course_focus == "teórico":
+            total_classes = 24
+            weekly_distribution = "4 clases por semana de 1 hora cada clase, con 3 conceptos clave por clase."
+        elif course_focus == "técnico":
+            total_classes = 12
+            weekly_distribution = "2 clases por semana de 2 horas cada clase, 1 hora teoría y 1 hora de contenido técnico con ejercicios prácticos."
 
-    # Sylabus Prompt
-    prompt = (
-        f"Como diseñador de programas académicos especializado en tecnología y con experiencia en la creación de cursos de ciencia de datos y negocios para empresas internacionales, basate en los cursos {course} "
-        f"tu misión es concretar un temario completo y detallado para el curso de {course_name}, orientado especialmente a {entry_profile} utilizando como base el perfil de egreso previamente generado, "
-        f"el objetivo principal y objetivos secundarios, tu tarea consiste en diseñar un temario que cumpla con las especificaciones detalladas y las necesidades de la audiencia. Este temario debe estructurarse considerando los siguientes requisitos:\n"
-        f"1. Duración Total del Curso: 6 semanas de enseñanza teórica y práctica, enfocando cada semana en el avance de un proyecto final.\n"
-        f"2. Total de clases: {total_classes}, distribución semanal: {weekly_distribution}\n" 
-        f"Al estructurar el temario, considera lo siguiente:\n"
-        f"- La importancia de incorporar fundamentos teóricos sólidos junto con aplicaciones prácticas que reflejen situaciones reales del curso.\n"
-        f"- La necesidad de adaptar los contenidos y metodologías de enseñanza para facilitar el aprendizaje del {entry_profile}, el {main_objective} y el enfoque {course_focus}.\n"
-        f"- La creación de un ambiente de aprendizaje que promueva la interacción, la resolución de problemas, y el desarrollo de un proyecto final que consolide el aprendizaje de todo el curso y habilidades adquiridas durante el curso.\n"
-        f"Nombre Semana: Tiene que ser un nombre de la semana, máximo 6 palabras,\n"
-        f"Clase: Tiene que ser un titulo llamativo que refleje el contenido de la clase,\n"
-        f"Conceptos: de clase: Los conceptos separados por comas de la clase,\n"
-        f"Descripcion de la clase: Una breve descripcion que refleje los conceptos y el contenido de la clase y que outline saldrán los alumnos de esa clase,\n"
-        f"Objetivos de la clase: 3 conceptos separados con comas de lo que se espera que los alumnos aprendan en la clase\n"
-        f"Retorna el siguiente formato obligatorio para cada habilidad:, no excluyas ningun []  No se deben usar caracteres especiales o formatos específicos para el texto. Solo está permitido [] Semana[Nombre[Nombre de la semana], Clase1[[Conceptos de clase], Descripcion[Descripcion de la clase], Objetivos[Objetivos de la clase]],Clase2[[Conceptos de clase],Descripcion[Descripcion de la clase],Objetivos[Objetivos de la clase]]\n. empieza a contar la clase desde 1 por cada semana, respeta mucho el formato y el nivel de [] . "
-        f"Ten en cuenta {total_classes} clases en total."
-    )
+        # Sylabus Prompt
+        prompt = (
+            f"Como diseñador de programas académicos especializado en tecnología y con experiencia en la creación de cursos de ciencia de datos y negocios para empresas internacionales, basate en los cursos {course} "
+            f"tu misión es concretar un temario completo y detallado para el curso de {course_name}, orientado especialmente a {entry_profile} utilizando como base el perfil de egreso previamente generado, "
+            f"el objetivo principal y objetivos secundarios, tu tarea consiste en diseñar un temario que cumpla con las especificaciones detalladas y las necesidades de la audiencia. Este temario debe estructurarse considerando los siguientes requisitos:\n"
+            f"1. Duración Total del Curso: 6 semanas de enseñanza teórica y práctica, enfocando cada semana en el avance de un proyecto final.\n"
+            f"2. Total de clases: {total_classes}, distribución semanal: {weekly_distribution}\n" 
+            f"Al estructurar el temario, considera lo siguiente:\n"
+            f"- La importancia de incorporar fundamentos teóricos sólidos junto con aplicaciones prácticas que reflejen situaciones reales del curso.\n"
+            f"- La necesidad de adaptar los contenidos y metodologías de enseñanza para facilitar el aprendizaje del {entry_profile}, el {main_objective} y el enfoque {course_focus}.\n"
+            f"- La creación de un ambiente de aprendizaje que promueva la interacción, la resolución de problemas, y el desarrollo de un proyecto final que consolide el aprendizaje de todo el curso y habilidades adquiridas durante el curso.\n"
+            f"Nombre Semana: Tiene que ser un nombre de la semana, máximo 6 palabras,\n"
+            f"Clase: Tiene que ser un titulo llamativo que refleje el contenido de la clase,\n"
+            f"Conceptos: de clase: Los conceptos separados por comas de la clase,\n"
+            f"Descripcion de la clase: Una breve descripcion que refleje los conceptos y el contenido de la clase y que outline saldrán los alumnos de esa clase,\n"
+            f"Objetivos de la clase: 3 conceptos separados con comas de lo que se espera que los alumnos aprendan en la clase\n"
+            f"Retorna el siguiente formato obligatorio para cada habilidad:, no excluyas ningun []  No se deben usar caracteres especiales o formatos específicos para el texto. Solo está permitido [] Semana[Nombre[Nombre de la semana], Clase1[[Conceptos de clase], Descripcion[Descripcion de la clase], Objetivos[Objetivos de la clase]],Clase2[[Conceptos de clase],Descripcion[Descripcion de la clase],Objetivos[Objetivos de la clase]]\n. empieza a contar la clase desde 1 por cada semana, respeta mucho el formato y el nivel de [] . "
+            f"Ten en cuenta {total_classes} clases en total."
+        )
 
-    return generate_chatgpt(prompt)
+        return generate_chatgpt(prompt)
+
+    
+
+   
+
+    # =========================Printing Key Skills=========================
+
+    print('Generating Principal Habilities .... 🤖')
+
+    key_skills = generate_key_skills(course_name, target_audience, graduate_profile)
+
+    print('Writting in Google Sheets .... ✍️')
+
+
+    # Extraer habilidades clave del texto
+    patron_habilidad = r"Numero\[\d+\], Nombre\[(.*?)\], Descripcion \[(.*?)\]"
+    habilidades = re.findall(patron_habilidad, key_skills)
+
+    fila_inicio = 3  # La fila donde comenzaremos a escribir
+    for nombre, descripcion in habilidades:
+        # Actualiza las celdas en Google Sheets para el nombre y la descripción
+        sheet4.update_cell(fila_inicio, 1, nombre)  # Escribe el nombre en la columna 1
+        sheet4.update_cell(fila_inicio, 2, descripcion)  # Escribe la descripción en la columna 2
+        fila_inicio += 1  # Incrementa la fila para la próxima habilidad
+
+
+
+    # =========================Printing Course Syllabus=========================
+
+    print('Generating Course Syllabus .... 🤖')
+
+    syllabus = generate_course_syllabus(course_name, profile, course_focus, principal_objetive, course)
+
+    print (syllabus)
+
+    print ('Writting in Google Sheets .... ✍️ ')
+
+    # Dividir el texto del syllabus en semanas, comenzando desde el primer elemento no vacío
+    semanas = re.split(r'Semana\[', syllabus)[1:]
+
+    # Fila inicial para la primera semana
+    fila_actual = 2
+
+    # Preparar un batch de actualizaciones
+    batch_updates = []
+
+    for semana in semanas:
+        # Obtener el nombre de la semana, asumiendo que la estructura siempre tiene 'Nombre[' antes de 'Clase1'
+        match = re.search(r'Nombre\[(.*?)\],', semana)
+        nombre_semana = match.group(1).strip() if match else 'Desconocido'
+
+        # Agregar la fila de título de 'Semana' y el nombre de la semana al batch
+        batch_updates.append({
+            'range': f'A{fila_actual}:B{fila_actual}',
+            'values': [['Semana', nombre_semana]]
+        })
+
+        # Incrementar fila_actual para colocar información de las clases
+        fila_clase = fila_actual + 1
+
+        # Extraer cada clase con su descripción y objetivos
+        clases = re.findall(r'Clase\d+\[\[(.*?)\], Descripcion\[(.*?)\], Objetivos\[(.*?)\]\]', semana)
+        clase_data = []
+        for nombre_clase, descripcion, objetivos in clases:
+            # Añadir la información de cada clase al arreglo de clase_data
+            clase_data.append([nombre_clase.strip(), descripcion.strip(), objetivos.strip()])
+            
+            # Incrementar fila_clase para la siguiente clase
+            fila_clase += 1
+
+        # Añadir las clases al batch        
+        batch_updates.append({
+            'range': f'C{fila_actual + 1}:E{fila_clase - 1}',
+            'values': clase_data    
+        })
+
+        # Actualizar fila_actual para la siguiente semana, asegurando un espacio de 5 filas entre semanas
+        fila_actual = fila_clase + 10
+
+    # Ejecutar todas las actualizaciones en un batch
+    sheet5.batch_update(batch_updates)
+
 
 
     # ==========================[Aplicación]=================================
 
 
 
-print('Generating Income Profile .... 🤖')
-
-profile = generate_course_entry_profile(course_name, target_audience, specific_topics, course_level, course_focus)
-print ('Writting in Google Sheets .... ✍️ ')
-
-sheet1.update_cell(2, 1, profile)
-
-print ('Done! ✅')
 
 
-print('Generating Courses  .... 🤖')
+# Título de la aplicación
+st.title("Entrada de datos para el curso")
 
-course = search_and_analyze_courses(course_name, course_level,profile)
+# Crear inputs de texto para cada variable y guardar los valores ingresados por el usuario
+course_name = st.text_input("Nombre del curso", "Sistemas de recomendación con Machine Learning")
 
+target_audience = st.text_area("Audiencia objetivo", "Personas con conocimiento en programación con Python que buscan profundizar su conocimiento en machine learning y crear un sistema de recomendación para su empresa, tienen un trabajo en una empresa top de México, cuentan con 4 horas a la semana para estudiar de lunes a viernes")
 
+specific_topics = st.text_input("Temas específicos", "Ejemplos y casos de uso de sistemas de recomendación")
 
-print ('Writting in Google Sheets .... ✍️ ')
+course_level = st.selectbox(
+    "Nivel del curso",
+    ("Básico", "Intermedio", "Avanzado", "Experto")
+)
 
-for i, section in enumerate(course, start=0):
-    sheet2.update_cell(i+2, 1, section)
+course_focus = st.text_input("Enfoque del curso", "técnico")
 
+next_learning_unit = st.text_input("Siguiente unidad de aprendizaje", "IA Generativa")
 
-print ('Done! ✅')
+if st.button('Guardar'):
+    st.write("Nombre del curso:", course_name)
+    st.write("Audiencia objetivo:", target_audience)
+    st.write("Temas específicos:", specific_topics)
+    st.write("Nivel del curso:", course_level)
+    st.write("Enfoque del curso:", course_focus)
+    st.write("Siguiente unidad de aprendizaje:", next_learning_unit)
+    st.write("The copilot start .... 🤖")
+    main()
+    st.write("The next link have your new lesson 🚀")
+    st.write("https://docs.google.com/spreadsheets/d/1EmJObSLuOedjwUAFJHG3_LWHyVrILSjQB_sqtSd86lM/edit?usp=sharing")
+    st.write("The copilot finish .... 🤖")
 
-
-
-print('Generating  Principal Objetive .... 🤖')
-
-principal_objetive = generate_course_objectives(course_name, course_level, course_focus, profile, specific_topics, course)
-
-print ('Writting in Google Sheets .... ✍️ ')
-
-# Search Objetivo in the text
-match = re.search(r'Nombre\[(.*?)\]', principal_objetive)
-if match:
-    name = match.group(1)
-    sheet3.update_cell(2, 1, name)
-
-match = re.search(r'Descripción\[(.*?)\]', principal_objetive)
-if match:
-    description = match.group(1)
-    sheet3.update_cell(3, 1, description)
-
-    print ('Done! ✅')
-
-
-# ======================Generating Objetives=====================
-
-print('Generating  Objectives .... 🤖')
-
-secondary_objetives = generate_course_secondary_objectives(course_name, course_level, course_focus, profile, specific_topics, principal_objetive,course)
-
-print("Objetivos secundarios generados:")
-print('Escribiendo en Google Sheets .... ✍️')
-
-# Dividir el texto en líneas
-lines = secondary_objetives.strip().split('\n')
-
-# Verificar que las líneas se están dividiendo correctamente
-print(f"Total de líneas a procesar: {len(lines)}")
-
-# Iterar sobre las líneas
-for i, line in enumerate(lines, start=3):
-    print(f"Procesando línea {i}")  # Impresión de depuración
-    number_match = re.search(r'Numero\[(.*?)\]', line)
-    name_match = re.search(r'Nombre\[(.*?)\]', line)
-    description_match = re.search(r'Descripci[oó]n\[(.*?)\]', line)
-
-    if number_match and name_match and description_match:
-        print(f"Actualizando Google Sheets para la línea {i}")  # Más impresiones de depuración
-        sheet3.update_cell(i, 3, name_match.group(1))
-        sheet3.update_cell(i, 4, description_match.group(1))
-    else:
-        print(f"No se encontraron coincidencias en la línea {i}")  # Ayuda a identificar líneas problemáticas
-
-print ('Done! ✅')
-
-# =========================Printing Graduate Profile=========================
-
-print('Generating Graduate Profile .... 🤖')
-graduate_profile = generate_graduate_profile(course_name, target_audience, specific_topics, next_learning_unit, principal_objetive, secondary_objetives)
+ 
 
 
-print ('Writting in Google Sheets .... ✍️ ')
-
-
-sheet4.update_cell(1, 2, graduate_profile)
-
-
-print('Done! ✅')
-
-
-# =========================Printing Key Skills=========================
-
-print('Generating Principal Habilities .... 🤖')
-
-key_skills = generate_key_skills(course_name, target_audience, graduate_profile)
-
-print('Writting in Google Sheets .... ✍️')
-
-
-# Extraer habilidades clave del texto
-patron_habilidad = r"Numero\[\d+\], Nombre\[(.*?)\], Descripcion \[(.*?)\]"
-habilidades = re.findall(patron_habilidad, key_skills)
-
-fila_inicio = 3  # La fila donde comenzaremos a escribir
-for nombre, descripcion in habilidades:
-    # Actualiza las celdas en Google Sheets para el nombre y la descripción
-    sheet4.update_cell(fila_inicio, 1, nombre)  # Escribe el nombre en la columna 1
-    sheet4.update_cell(fila_inicio, 2, descripcion)  # Escribe la descripción en la columna 2
-    fila_inicio += 1  # Incrementa la fila para la próxima habilidad
-
-
-
-# =========================Printing Course Syllabus=========================
-
-print('Generating Course Syllabus .... 🤖')
-
-syllabus = generate_course_syllabus(course_name, profile, course_focus, principal_objetive, course)
-
-print (syllabus)
-
-print ('Writting in Google Sheets .... ✍️ ')
-
-# Dividir el texto del syllabus en semanas, comenzando desde el primer elemento no vacío
-semanas = re.split(r'Semana\[', syllabus)[1:]
-
-# Fila inicial para la primera semana
-fila_actual = 2
-
-# Preparar un batch de actualizaciones
-batch_updates = []
-
-for semana in semanas:
-    # Obtener el nombre de la semana, asumiendo que la estructura siempre tiene 'Nombre[' antes de 'Clase1'
-    match = re.search(r'Nombre\[(.*?)\],', semana)
-    nombre_semana = match.group(1).strip() if match else 'Desconocido'
-
-    # Agregar la fila de título de 'Semana' y el nombre de la semana al batch
-    batch_updates.append({
-        'range': f'A{fila_actual}:B{fila_actual}',
-        'values': [['Semana', nombre_semana]]
-    })
-
-    # Incrementar fila_actual para colocar información de las clases
-    fila_clase = fila_actual + 1
-
-    # Extraer cada clase con su descripción y objetivos
-    clases = re.findall(r'Clase\d+\[\[(.*?)\], Descripcion\[(.*?)\], Objetivos\[(.*?)\]\]', semana)
-    clase_data = []
-    for nombre_clase, descripcion, objetivos in clases:
-        # Añadir la información de cada clase al arreglo de clase_data
-        clase_data.append([nombre_clase.strip(), descripcion.strip(), objetivos.strip()])
-        
-        # Incrementar fila_clase para la siguiente clase
-        fila_clase += 1
-
-    # Añadir las clases al batch        
-    batch_updates.append({
-        'range': f'C{fila_actual + 1}:E{fila_clase - 1}',
-        'values': clase_data    
-    })
-
-    # Actualizar fila_actual para la siguiente semana, asegurando un espacio de 5 filas entre semanas
-    fila_actual = fila_clase + 10
-
-# Ejecutar todas las actualizaciones en un batch
-sheet5.batch_update(batch_updates)
 
 
 
