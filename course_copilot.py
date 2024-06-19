@@ -1,23 +1,23 @@
 import openai
 import gspread
 import re
-from config import api_key, api_google
+from config import api_key
 from oauth2client.service_account import ServiceAccountCredentials
 from prompts import course_name, target_audience, specific_topics, course_level, course_focus, next_learning_unit
 import json
 
 # Initial Configuration
-# openai.api_key = api_key
+# openai.api_key = api_key      
 # #API Google Sheets
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 # creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-78432e6747e5.json', scope)
 
 #streamlit secret credentials
 
-open.api_key = st.secrets["api_key"]
+open.api_key = st.secrets.gpt_key.apy_key
 
 
-json_creds = json.loads(st.secrets["google_creds"]["json"])
+json_creds = json.loads(st.secrets.google_creds.json)
 creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
 
 client = gspread.authorize(creds)
