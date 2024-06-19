@@ -1,7 +1,7 @@
 import openai
 import gspread
 import re
-from config import api_key
+# from config import api_key
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import streamlit as st
