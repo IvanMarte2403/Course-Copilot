@@ -5,6 +5,7 @@ from config import api_key
 from oauth2client.service_account import ServiceAccountCredentials
 from prompts import course_name, target_audience, specific_topics, course_level, course_focus, next_learning_unit
 import json
+import streamlit as st
 
 # Initial Configuration
 # openai.api_key = api_key      
