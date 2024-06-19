@@ -5,19 +5,17 @@ import re
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import streamlit as st
-import subprocess
 
 
 # Initial Configuration
 # openai.api_key = api_key      
 # # #API Google Sheets
-# scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 # creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-78432e6747e5.json', scope)
 
 #streamlit secret credentials
 
-open.api_key = st.secrets.gpt_key.apy_key
-
+openai.api_key = st.secrets["gpt_key"]['api_key']
 
 json_creds = json.loads(st.secrets.google_creds.json)
 creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
