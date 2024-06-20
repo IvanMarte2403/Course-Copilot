@@ -22,7 +22,7 @@ creds = ServiceAccountCredentials.from_json_keyfile_name('course-copilot-425602-
 # json_creds_str = st.secrets["google_creds"]["json"]
 # json_creds = json.loads(json_creds_str)
 # print("JSON string from secrets:", json_creds_str)
-# json_creds = json.loads(json_creds_str)
+# json_creds = json.loads(json_creds_str)J
 # creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
 
 client = gspread.authorize(creds)
@@ -63,6 +63,7 @@ def main():
             f"tu tarea es mejorar el perfil de ingreso para el curso de {course_name} "
             f"tomando como base a estudiantes {target_audience} definido para este curso. "
             f"Este curso tiene un nivel {course_level}. El perfil de ingreso ideal para este curso es..., no se deben usar caracteres especiales o formatos específicos para el texto."
+            f" ten en cuenta {course_focus} y los {specific_topics}"
         )
 
         return generate_chatgpt(prompt)
@@ -119,101 +120,11 @@ def main():
             )
         return generate_chatgpt(prompt)
     
-
-    print('Generating Income Profile .... 🤖')
-
-    profile = generate_course_entry_profile(course_name, target_audience, specific_topics, course_level, course_focus)
-    print ('Writting in Google Sheets .... ✍️ ')
-
-    sheet1.update_cell(2, 1, profile)
-
-    print ('Done! ✅')
-
-
-    print('Generating Courses  .... 🤖')
-
-    course = search_and_analyze_courses(course_name, course_level,profile)
-
-
-    print ('Writting in Google Sheets .... ✍️ ')
-
-    for i, section in enumerate(course, start=0):
-        sheet2.update_cell(i+2, 1, section)
-
-
-    print ('Done! ✅')
-
-
-
-    print('Generating  Principal Objetive .... 🤖')
-
-    principal_objetive = generate_course_objectives(course_name, course_level, course_focus, profile, specific_topics, course)
-
-    print ('Writting in Google Sheets .... ✍️ ')
-
-    # Search Objetivo in the text
-    match = re.search(r'Nombre\[(.*?)\]', principal_objetive)
-    if match:
-        name = match.group(1)
-        sheet3.update_cell(2, 1, name)
-
-    match = re.search(r'Descripción\[(.*?)\]', principal_objetive)
-    if match:
-        description = match.group(1)
-        sheet3.update_cell(3, 1, description)
-
-        print ('Done! ✅')
-
-
-    # ======================Generating Objetives=====================
-
-    print('Generating  Objectives .... 🤖')
-
-    secondary_objetives = generate_course_secondary_objectives(course_name, course_level, course_focus, profile, specific_topics, principal_objetive,course)
-
-    print("Objetivos secundarios generados:")
-    print('Escribiendo en Google Sheets .... ✍️')
-
-    # Dividir el texto en líneas
-    lines = secondary_objetives.strip().split('\n')
-
-    # Verificar que las líneas se están dividiendo correctamente
-    print(f"Total de líneas a procesar: {len(lines)}")
-
-    # Iterar sobre las líneas
-    for i, line in enumerate(lines, start=3):
-        print(f"Procesando línea {i}")  # Impresión de depuración
-        number_match = re.search(r'Numero\[(.*?)\]', line)
-        name_match = re.search(r'Nombre\[(.*?)\]', line)
-        description_match = re.search(r'Descripci[oó]n\[(.*?)\]', line)
-
-        if number_match and name_match and description_match:
-            print(f"Actualizando Google Sheets para la línea {i}")  # Más impresiones de depuración
-            sheet3.update_cell(i, 3, name_match.group(1))
-            sheet3.update_cell(i, 4, description_match.group(1))
-        else:
-            print(f"No se encontraron coincidencias en la línea {i}")  # Ayuda a identificar líneas problemáticas
-
-    print ('Done! ✅')
-
-    # =========================Printing Graduate Profile=========================
-
-    print('Generating Graduate Profile .... 🤖')
-    graduate_profile = generate_graduate_profile(course_name, target_audience, specific_topics, next_learning_unit, principal_objetive, secondary_objetives)
-
-
-    print ('Writting in Google Sheets .... ✍️ ')
-
-
-    sheet4.update_cell(1, 2, graduate_profile)
-
-
-    print('Done! ✅')
-
-
-
+        # ==========================[Generating Key Skills]=================================
     # Key Skills 
+
     def generate_key_skills(course_name, target_audience, graduate_profile):
+    
         prompt = (
             f"En todas las habilidades basate tambien en {graduate_profile}. Para cada una de las 5 habilidades principales del curso {course_name}, enfocado en {target_audience}, "
             f"genera un detalle que incluya:\n"
@@ -225,6 +136,7 @@ def main():
         
         return generate_chatgpt(prompt)
 
+     # ==========================[Generating Course Syllabus]=================================
 
     def generate_course_syllabus(course_name, entry_profile, course_focus, main_objective, course):
    
@@ -257,18 +169,119 @@ def main():
         )
 
         return generate_chatgpt(prompt)
-
     
-
+    
+    # ==========================[Income Profile]=================================
+    st.title('Generating Income Profile .... 🤖')
+    profile = generate_course_entry_profile(course_name, target_audience, specific_topics, course_level, course_focus)
+     # Actualiza la hoja de Google Sheets
    
+    st.write(profile)
+
+    st.info('Writting in Google Sheets .... ✍️ ')
+    sheet1.update_cell(2, 1, profile)
+    st.success('Done! ✅')
+    # ==========================[Generating Courses]=================================
+
+    print('Generating Courses  .... 🤖')
+    st.info('Generating Courses  .... 🤖')
+
+    course = search_and_analyze_courses(course_name, course_level,profile)
+    print ('Writting in Google Sheets .... ✍️ ')
+    st.info('Writting in Google Sheets .... ✍️')
+
+    for i, section in enumerate(course, start=0):
+        sheet2.update_cell(i+2, 1, section)
+
+
+    print ('Done! ✅')
+    st.success('Done! ✅')
+
+
+    # ==========================[Generating Principal Objectives]=================================
+
+    print('Generating  Principal Objetive .... 🤖')
+    st.info('Generating  Principal Objetive .... 🤖')
+
+    principal_objetive = generate_course_objectives(course_name, course_level, course_focus, profile, specific_topics, course)
+
+    print ('Writting in Google Sheets .... ✍️ ')
+    st.info('Writting in Google Sheets .... ✍️')
+
+    # Search Objetivo in the text
+    match = re.search(r'Nombre\[(.*?)\]', principal_objetive)
+    if match:
+        name = match.group(1)
+        sheet3.update_cell(2, 1, name)
+
+    match = re.search(r'Descripción\[(.*?)\]', principal_objetive)
+    if match:
+        description = match.group(1)
+        sheet3.update_cell(3, 1, description)
+
+        print ('Done! ✅')
+        st.success('Done! ✅')
+
+
+    # ======================Generating Objetives=====================
+
+    print('Generating  Objectives .... 🤖')
+    st.info('Generating  Objectives .... 🤖')
+
+    secondary_objetives = generate_course_secondary_objectives(course_name, course_level, course_focus, profile, specific_topics, principal_objetive,course)
+
+    print('Escribiendo en Google Sheets .... ✍️')
+    st.info('Escribiendo en Google Sheets .... ✍️')
+
+    # Dividir el texto en líneas
+    lines = secondary_objetives.strip().split('\n')
+
+    # Verificar que las líneas se están dividiendo correctamente
+    print(f"Total de líneas a procesar: {len(lines)}")
+
+    # Iterar sobre las líneas
+    for i, line in enumerate(lines, start=3):
+        print(f"Procesando línea {i}")  # Impresión de depuración
+        number_match = re.search(r'Numero\[(.*?)\]', line)
+        name_match = re.search(r'Nombre\[(.*?)\]', line)
+        description_match = re.search(r'Descripci[oó]n\[(.*?)\]', line)
+
+        if number_match and name_match and description_match:
+            print(f"Actualizando Google Sheets para la línea {i}")  # Más impresiones de depuración
+            sheet3.update_cell(i, 3, name_match.group(1))
+            sheet3.update_cell(i, 4, description_match.group(1))
+        else:
+            print(f"No se encontraron coincidencias en la línea {i}")  # Ayuda a identificar líneas problemáticas
+
+    print ('Done! ✅')
+    st.success('Done! ✅')
+
+    # =========================Printing Graduate Profile=========================
+
+    print('Generating Graduate Profile .... 🤖')
+    st.info('Generating Graduate Profile .... 🤖')
+    graduate_profile = generate_graduate_profile(course_name, target_audience, specific_topics, next_learning_unit, principal_objetive, secondary_objetives)
+
+
+    print ('Writting in Google Sheets .... ✍️ ')
+    st.info('Writting in Google Sheets .... ✍️')
+
+
+    sheet4.update_cell(1, 2, graduate_profile)
+
+
+    print('Done! ✅')
+    st.success('Done! ✅')   
 
     # =========================Printing Key Skills=========================
 
     print('Generating Principal Habilities .... 🤖')
+    st.info('Generating Principal Habilities .... 🤖')
 
     key_skills = generate_key_skills(course_name, target_audience, graduate_profile)
 
     print('Writting in Google Sheets .... ✍️')
+    st.info('Writting in Google Sheets .... ✍️')
 
 
     # Extraer habilidades clave del texto
@@ -282,17 +295,19 @@ def main():
         sheet4.update_cell(fila_inicio, 2, descripcion)  # Escribe la descripción en la columna 2
         fila_inicio += 1  # Incrementa la fila para la próxima habilidad
 
-
+    st.success('Done! ✅')
 
     # =========================Printing Course Syllabus=========================
 
     print('Generating Course Syllabus .... 🤖')
+    st.info('Generating Course Syllabus .... 🤖')
 
     syllabus = generate_course_syllabus(course_name, profile, course_focus, principal_objetive, course)
 
     print (syllabus)
 
     print ('Writting in Google Sheets .... ✍️ ')
+    st.info('Writting in Google Sheets .... ✍️')
 
     # Dividir el texto del syllabus en semanas, comenzando desde el primer elemento no vacío
     semanas = re.split(r'Semana\[', syllabus)[1:]
@@ -339,13 +354,9 @@ def main():
     # Ejecutar todas las actualizaciones en un batch
     sheet5.batch_update(batch_updates)
 
-
+    print ('Done! ✅')
 
     # ==========================[Aplicación]=================================
-
-
-
-
 
 # Título de la aplicación
 st.title("Entrada de datos para el curso")
@@ -366,18 +377,14 @@ course_focus = st.text_input("Enfoque del curso", "técnico")
 
 next_learning_unit = st.text_input("Siguiente unidad de aprendizaje", "IA Generativa")
 
-if st.button('Guardar'):
-    st.write("Nombre del curso:", course_name)
-    st.write("Audiencia objetivo:", target_audience)
-    st.write("Temas específicos:", specific_topics)
-    st.write("Nivel del curso:", course_level)
-    st.write("Enfoque del curso:", course_focus)
-    st.write("Siguiente unidad de aprendizaje:", next_learning_unit)
-    st.write("The copilot start .... 🤖")
-    main()
-    st.write("The next link have your new lesson 🚀")
+if st.button('Comenzar'):
+
+    st.subheader("The copilot start .... 🤖")
+    st.info("The next link have your new lesson 🚀")
     st.write("https://docs.google.com/spreadsheets/d/1EmJObSLuOedjwUAFJHG3_LWHyVrILSjQB_sqtSd86lM/edit?usp=sharing")
-    st.write("The copilot finish .... 🤖")
+
+    main()
+    st.success("The copilot finish .... 🤖")
 
  
 
